@@ -28,6 +28,7 @@ let scene: SceneApi | null = null
 afterEach(() => {
   scene?.unmount()
   scene = null
+  document.body.classList.remove('canvas-interacting', 'canvas-dragging')
 })
 
 describe('drag integration — canvas-node scenarios', () => {
