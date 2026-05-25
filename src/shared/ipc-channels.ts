@@ -27,6 +27,7 @@ export const FS_RENAME = 'fs:rename'
 export const FS_MKDIR = 'fs:mkdir'
 export const FS_COPY = 'fs:copy'
 export const FS_SEARCH = 'fs:search'
+export const FS_READ_BINARY = 'fs:readBinary'
 
 // Shell utilities
 export const SHELL_SHOW_IN_FOLDER = 'shell:showInFolder'
@@ -108,6 +109,8 @@ export const ANALYTICS_FEEDBACK_PROMPT = 'analytics:feedbackPrompt'
 export const ANALYTICS_FEEDBACK_SUBMIT = 'analytics:feedbackSubmit'
 // Renderer -> main: user dismissed the modal without submitting.
 export const ANALYTICS_FEEDBACK_DISMISS = 'analytics:feedbackDismiss'
+// Renderer -> main: user interacted with the feedback modal (first star click or textarea focus).
+export const ANALYTICS_FEEDBACK_ENGAGED = 'analytics:feedbackEngaged'
 // Renderer -> main: pull-based check for pending feedback (returns payload or null).
 export const ANALYTICS_FEEDBACK_GET_PENDING = 'analytics:feedbackGetPending'
 

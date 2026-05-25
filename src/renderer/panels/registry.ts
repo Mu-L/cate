@@ -22,6 +22,7 @@ import {
   SquaresFour,
   List,
   Sparkle,
+  FileDoc,
   type Icon as PhosphorIcon,
 } from '@phosphor-icons/react'
 import type { PanelType, Point } from '../../shared/types'
@@ -44,6 +45,7 @@ const FileExplorerPanel = React.lazy(() => import('./FileExplorerPanel'))
 const ProjectListPanel = React.lazy(() => import('./ProjectListPanel'))
 const CanvasPanel = React.lazy(() => import('./CanvasPanel'))
 const AgentPanel = React.lazy(() => import('../../agent/renderer/AgentPanel'))
+const DocumentPanel = React.lazy(() => import('./DocumentPanel'))
 
 // -----------------------------------------------------------------------------
 // Renderer definition
@@ -61,6 +63,8 @@ export interface PanelCreateArgs {
   url?: string
   /** Terminal only. */
   initialInput?: string
+  /** Document only. */
+  documentType?: 'pdf' | 'docx' | 'image'
 }
 
 export interface RendererPanelDefinition extends SharedPanelDefinition {
@@ -135,6 +139,13 @@ export const PANEL_REGISTRY: Record<PanelType, RendererPanelDefinition> = {
     Component: AgentPanel,
     create: ({ workspaceId, canvasPoint, placement }) =>
       useAppStore.getState().createAgent(workspaceId, canvasPoint, placement) || null,
+  },
+  document: {
+    ...PANEL_DEFINITIONS.document,
+    icon: FileDoc,
+    Component: DocumentPanel,
+    create: ({ workspaceId, canvasPoint, placement, filePath, documentType }) =>
+      useAppStore.getState().createDocument(workspaceId, filePath, documentType, canvasPoint, placement) || null,
   },
 }
 

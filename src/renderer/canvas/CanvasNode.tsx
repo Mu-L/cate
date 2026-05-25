@@ -303,10 +303,14 @@ const CanvasNode: React.FC<CanvasNodeProps> = ({
   )
 
   const handleClose = useCallback(async () => {
-    const ok = await confirmCloseForPanels(collectPanelIds(layout))
+    const panelIds = collectPanelIds(layout)
+    const ok = await confirmCloseForPanels(panelIds)
     if (!ok) return
+    for (const panelId of panelIds) {
+      useAppStore.getState().closePanel(wsId, panelId)
+    }
     removeNode(nodeId)
-  }, [removeNode, nodeId, layout, collectPanelIds, confirmCloseForPanels])
+  }, [removeNode, nodeId, layout, collectPanelIds, confirmCloseForPanels, wsId])
 
   const handleToggleMaximize = useCallback(() => {
     setIsAnimatingLayout(true)

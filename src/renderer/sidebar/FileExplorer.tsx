@@ -11,6 +11,7 @@ import { FileTreeNode } from './FileTreeNode'
 import { getClipboard, hasClipboard } from './fileClipboard'
 import { useAppStore } from '../stores/appStore'
 import { useDockStore } from '../stores/dockStore'
+import { openFileAsPanel } from '../lib/fileRouting'
 import { SidebarSectionHeader, SidebarHeaderButton } from './SidebarSectionHeader'
 import type { DockLayoutNode } from '../../shared/types'
 
@@ -66,7 +67,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({ rootPath }) => {
   const createSeqRef = useRef(0)
 
   const selectedWorkspaceId = useAppStore((s) => s.selectedWorkspaceId)
-  const createEditor = useAppStore((s) => s.createEditor)
+
   const createTerminal = useAppStore((s) => s.createTerminal)
   const removeWorkspace = useAppStore((s) => s.removeWorkspace)
 
@@ -245,10 +246,10 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({ rootPath }) => {
         ? undefined
         : { target: 'dock' as const, zone: 'center' as const }
       for (const filePath of filePaths) {
-        createEditor(selectedWorkspaceId, filePath, undefined, placement)
+        openFileAsPanel(selectedWorkspaceId, filePath, undefined, placement)
       }
     },
-    [createEditor, selectedWorkspaceId],
+    [selectedWorkspaceId],
   )
 
   const handleReload = useCallback(() => {
@@ -476,10 +477,13 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({ rootPath }) => {
         <div className="flex items-center justify-center flex-1 text-xs text-muted">
           Loading...
         </div>
-      ) : nodes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center flex-1 text-muted text-xs gap-2 p-4">
-          <span className="text-2xl">&#128193;</span>
-          <span>No files found</span>
+      ) : nodes.length === 0 && !rootCreating ? (
+        <div
+          className="flex flex-col items-center justify-center flex-1 text-muted text-xs gap-2 p-4"
+          onContextMenu={handleRootContextMenu}
+        >
+          <span className="text-2xl pointer-events-none">&#128193;</span>
+          <span className="pointer-events-none">No files found</span>
         </div>
       ) : (
         <div

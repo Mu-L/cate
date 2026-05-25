@@ -28,6 +28,8 @@ mac:
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
   notarize: true
+  extendInfo:
+    NSMicrophoneUsageDescription: Cate needs microphone access so terminal-based tools (like Claude Code) can record audio for voice input.
   target:
     - target: dmg
       arch:

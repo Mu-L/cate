@@ -1,6 +1,23 @@
-import { app, session, type Session, type WebContents } from 'electron'
+import { app, session, shell, type Session, type WebContents } from 'electron'
 import log from './logger'
 import { disableWebviewHardening } from './featureFlags'
+
+const OAUTH_HOSTS = new Set([
+  'accounts.google.com',
+  'login.microsoftonline.com',
+  'appleid.apple.com',
+])
+
+function isOAuthUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    if (OAUTH_HOSTS.has(parsed.host)) return true
+    if (parsed.host === 'github.com' && parsed.pathname.startsWith('/login/oauth')) return true
+    return false
+  } catch {
+    return false
+  }
+}
 
 const configuredGuestSessions = new Set<string>()
 
@@ -28,12 +45,18 @@ function configureGuestSessionPolicies(targetSession: Session, sessionKey: strin
   if (configuredGuestSessions.has(sessionKey)) return
   configuredGuestSessions.add(sessionKey)
 
+  const allowedPermissions = new Set(['cookies', 'storage-access'])
+
   targetSession.setPermissionRequestHandler((_wc, permission, callback) => {
+    if (allowedPermissions.has(permission)) {
+      callback(true)
+      return
+    }
     log.warn('[webview] Denied guest permission request: %s', permission)
     callback(false)
   })
 
-  targetSession.setPermissionCheckHandler(() => false)
+  targetSession.setPermissionCheckHandler((_wc, permission) => allowedPermissions.has(permission))
 
   targetSession.webRequest.onBeforeRequest((details, callback) => {
     if (details.resourceType === 'mainFrame' && !isAllowedGuestUrl(details.url)) {
@@ -52,11 +75,23 @@ function guestSessionFor(contents: WebContents, partition?: string): Session {
 
 export function installWebContentsSecurity(): void {
   app.on('web-contents-created', (_event, contents) => {
-    // Default: deny popups for every web-contents. Webview guests get a
-    // permissive handler installed below that allows popups but routes them
-    // through Cate's popup registry so the agent can drive them via the
-    // `cate portal` CLI.
-    contents.setWindowOpenHandler(() => ({ action: 'deny' }))
+    if (contents.getType() === 'webview') {
+      contents.on('will-navigate', (event, url) => {
+        if (isOAuthUrl(url)) {
+          event.preventDefault()
+          shell.openExternal(url)
+        }
+      })
+
+      contents.setWindowOpenHandler(({ url }) => {
+        if (isOAuthUrl(url)) {
+          shell.openExternal(url)
+        }
+        return { action: 'deny' }
+      })
+    } else {
+      contents.setWindowOpenHandler(() => ({ action: 'deny' }))
+    }
 
     if (contents.getType() === 'window') {
       contents.on('will-navigate', (event, url) => {

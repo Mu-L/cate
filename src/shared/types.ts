@@ -26,7 +26,7 @@ export interface Rect {
 // Panel types
 // -----------------------------------------------------------------------------
 
-export type PanelType = 'terminal' | 'browser' | 'editor' | 'git' | 'fileExplorer' | 'projectList' | 'canvas' | 'agent'
+export type PanelType = 'terminal' | 'browser' | 'editor' | 'git' | 'fileExplorer' | 'projectList' | 'canvas' | 'agent' | 'document'
 
 // -----------------------------------------------------------------------------
 // Canvas node
@@ -107,6 +107,8 @@ export interface PanelState {
    *  the terminal uses the workspace's `rootPath`. Set when the terminal was
    *  created from a dropped folder or worktree to scope it to that path. */
   cwd?: string
+  /** Document panels only: sub-type discriminator for the viewer. */
+  documentType?: 'pdf' | 'docx' | 'image'
   /** Id of the WorktreeMeta in the parent workspace that this panel is
    *  associated with. Drives the per-panel color accent and the title-bar
    *  "switch worktree" pill. Applies to terminal + agent panels. */
@@ -577,6 +579,8 @@ export interface NodeSnapshot {
   regionId?: string
   /** Unsaved scratch-editor content, restored on load. */
   unsavedContent?: string
+  /** Document panels only: sub-type discriminator for the viewer. */
+  documentType?: 'pdf' | 'docx' | 'image'
 }
 
 export interface SessionSnapshot {
@@ -831,6 +835,7 @@ export const PANEL_CANVAS_DROP_SIZES: Record<PanelType, Size> = {
   projectList: { width: 280, height: 360 },
   canvas: { width: 640, height: 480 },
   agent: { width: 520, height: 440 },
+  document: { width: 640, height: 480 },
 }
 
 // -----------------------------------------------------------------------------

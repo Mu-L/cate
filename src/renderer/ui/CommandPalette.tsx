@@ -22,6 +22,7 @@ import {
 import { useUIStore } from '../stores/uiStore'
 import { useAppStore } from '../stores/appStore'
 import { useCanvasStoreContext, useCanvasStoreApi } from '../stores/CanvasStoreContext'
+import { openFileAsPanel } from '../lib/fileRouting'
 
 // -----------------------------------------------------------------------------
 // Command definitions
@@ -305,7 +306,7 @@ export const CommandPalette: React.FC = () => {
               if (file) {
                 const wsId = useAppStore.getState().selectedWorkspaceId
                 const fullPath = rootPath ? `${rootPath}/${file}` : file
-                useAppStore.getState().createEditor(wsId, fullPath, undefined, dockCenter)
+                openFileAsPanel(wsId, fullPath, undefined, dockCenter)
                 close()
               }
             } else {
@@ -323,7 +324,7 @@ export const CommandPalette: React.FC = () => {
               if (file) {
                 const wsId = useAppStore.getState().selectedWorkspaceId
                 const fullPath = rootPath ? `${rootPath}/${file}` : file
-                useAppStore.getState().createEditor(wsId, fullPath, undefined, dockCenter)
+                openFileAsPanel(wsId, fullPath, undefined, dockCenter)
                 close()
               }
             }
@@ -426,7 +427,7 @@ export const CommandPalette: React.FC = () => {
                         onClick={() => {
                           const wsId = useAppStore.getState().selectedWorkspaceId
                           const fullPath = rootPath ? `${rootPath}/${file}` : file
-                          useAppStore.getState().createEditor(wsId, fullPath, undefined, dockCenter)
+                          openFileAsPanel(wsId, fullPath, undefined, dockCenter)
                           close()
                         }}
                         onMouseEnter={() => setSelectedIndex(itemIndex)}
@@ -516,7 +517,7 @@ export const CommandPalette: React.FC = () => {
                         onClick={() => {
                           const wsId = useAppStore.getState().selectedWorkspaceId
                           const fullPath = rootPath ? `${rootPath}/${file}` : file
-                          useAppStore.getState().createEditor(wsId, fullPath, undefined, dockCenter)
+                          openFileAsPanel(wsId, fullPath, undefined, dockCenter)
                           close()
                         }}
                         onMouseEnter={() => setSelectedIndex(fileIndex)}

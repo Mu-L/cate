@@ -13,6 +13,7 @@ import { useCanvasStoreApi } from '../stores/CanvasStoreContext'
 import { useDockStore } from '../stores/dockStore'
 import { findTabStack } from '../stores/dockTreeUtils'
 import { terminalRegistry } from '../lib/terminalRegistry'
+import { openFileAsPanel } from '../lib/fileRouting'
 
 // -----------------------------------------------------------------------------
 // Types
@@ -187,12 +188,12 @@ export function GlobalSearch() {
         let panelId: string | undefined
         if (ws) {
           const existing = Object.values(ws.panels).find(
-            (p) => p.type === 'editor' && p.filePath === result.filePath,
+            (p) => (p.type === 'editor' || p.type === 'document') && p.filePath === result.filePath,
           )
           panelId = existing?.id
         }
         if (!panelId) {
-          panelId = appStore.createEditor(wsId, result.filePath)
+          panelId = openFileAsPanel(wsId, result.filePath)
         }
         const cs = canvasApi.getState()
         const node = panelId ? Object.values(cs.nodes).find((n) => n.panelId === panelId) : undefined

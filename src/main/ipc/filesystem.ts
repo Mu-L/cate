@@ -21,6 +21,7 @@ import {
   FS_MKDIR,
   FS_COPY,
   FS_SEARCH,
+  FS_READ_BINARY,
 } from '../../shared/ipc-channels'
 import { FileTreeNode, FileSearchResult, FileSearchOptions, FILE_EXCLUSIONS } from '../../shared/types'
 import { sendToWindow, windowFromEvent } from '../windowRegistry'
@@ -482,6 +483,16 @@ export function registerHandlers(): void {
       return await readFile(await validatePathStrict(filePath))
     } catch (error) {
       log.error(`[${FS_READ_FILE}]`, error)
+      throw error instanceof Error ? error : new Error(String(error))
+    }
+  })
+
+  ipcMain.handle(FS_READ_BINARY, async (_event, filePath: string) => {
+    try {
+      const safePath = await validatePathStrict(filePath)
+      return await fs.readFile(safePath)
+    } catch (error) {
+      log.error(`[${FS_READ_BINARY}]`, error)
       throw error instanceof Error ? error : new Error(String(error))
     }
   })

@@ -165,6 +165,7 @@ export async function saveSession(): Promise<void> {
         unsavedContent: panel?.type === 'editor' && !panel?.filePath
           ? panel?.unsavedContent
           : undefined,
+        documentType: panel?.documentType,
       }
     })
 
@@ -425,6 +426,23 @@ export async function restoreSession(snapshot: SessionSnapshot, canvasStoreApi?:
         const panelId = appStore.createBrowser(wsId, nodeSnap.url ?? undefined)
         // Browser panels are addressed by their title in `cate portal` — same
         // reason as terminals, the saved name must come back.
+        if (nodeSnap.title) appStore.updatePanelTitle(wsId, panelId, nodeSnap.title)
+        const canvasState = getCanvasState()
+        if (canvasState) {
+          const newNodeId = canvasState.nodeForPanel(panelId)
+          if (newNodeId) {
+            canvasState.moveNode(newNodeId, position)
+            canvasState.resizeNode(newNodeId, size)
+            if (nodeSnap.regionId) {
+              const mappedRegionId = regionIdMap.get(nodeSnap.regionId)
+              if (mappedRegionId) canvasState.setNodeRegion(newNodeId, mappedRegionId)
+            }
+          }
+        }
+        break
+      }
+      case 'document': {
+        const panelId = appStore.createDocument(wsId, nodeSnap.filePath ?? undefined, nodeSnap.documentType, position)
         if (nodeSnap.title) appStore.updatePanelTitle(wsId, panelId, nodeSnap.title)
         const canvasState = getCanvasState()
         if (canvasState) {
