@@ -4,6 +4,180 @@ All notable changes to Cate will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.1] - 2026-05-25
+
+Patch release with new panel types, cross-platform fixes, and UI polish.
+
+### Added
+
+- **Document rendering panel** — new panel type for viewing PDF files (via pdf.js), DOCX files (via mammoth), and images natively on the canvas. File type is detected from magic bytes rather than relying solely on extensions.
+- **Markdown preview in editor** — markdown files now show a Preview/Source toggle (top-right corner) that switches between Monaco editing and a rendered view using react-markdown with GFM support. The editor stays mounted while hidden so switching back is instant.
+- **Themed titlebar drag strip on macOS** — when native tabs are off (now the default), a themed 28 px strip renders above the canvas with traffic-light alignment, collapsing automatically in native fullscreen.
+- **Post-update dialog redesign** — shown on first launch (not just updates) with Product Hunt embed, GitHub star count, and newsletter links.
+
+### Fixed
+
+- **Ctrl+V paste in terminal panels on Windows/Linux** — xterm.js was encoding a literal `^V` (0x16) to the PTY instead of pasting. The custom key handler now yields to the browser's native paste event for the Ctrl+V chord on non-macOS.
+- **Windows agent launch crash (spawn node ENOENT)** — pi's shell-less `spawn("node", ...)` couldn't find a `.cmd` wrapper on Windows. The shim now creates a real `node.exe` hardlink to the Electron binary.
+- **Windows node shim without Developer Mode** — replaced symlink-based shim with a lightweight `node.cmd` batch wrapper that doesn't require admin/Developer Mode privileges.
+- **OAuth flows blocked in webview** — Google and other providers block embedded webview sign-in. OAuth navigations now open in the system browser via `shell.openExternal`.
+- **Closing a canvas node leaked its panels** — child terminals/editors/browsers stayed registered and running after the parent node was closed. `handleClose` now calls `closePanel` for every child before removing the node.
+- **macOS microphone entitlement** — added `com.apple.security.device.audio-input` entitlement and `NSMicrophoneUsageDescription` so child processes (e.g. Claude Code voice input) can access CoreAudio.
+- **Creating files/folders in an empty explorer folder** — the inline name-entry input was gated behind a non-empty tree; now renders when `rootCreating` is active.
+- **CI build OOM** — set `NODE_OPTIONS --max-old-space-size` in the release workflow to prevent electron-vite bundling from running out of memory.
+
+## [1.0.0] - 2026-05-24
+
+First major release. Stabilises the agent panel, introduces semantic color tokens, and polishes the auto-updater.
+
+### Changed
+
+- **Semantic agent color tokens** — replaced hardcoded violet Tailwind classes with `agent` and `agent-light` color tokens defined in one place.
+- **Agent panel polish** — automatic retry for marketplace fetch (cold connections often timeout on first attempt), increased timeout from 5 s to 8 s, and replaced native `<select>` for default model with the searchable picker used in the chat header.
+
+### Fixed
+
+- **Auto-update download fallback** — when electron-updater's initial check errors (e.g. provider mismatch), the fallback now broadcasts `available` instead of `manual`, so clicking Update attempts a native download first and only falls back to the release page if that fails.
+
+## [0.4.12] - 2026-05-24
+
+### Added
+
+- **Unified command palette (Cmd+K)** — merged the panel switcher (Cmd+E) into a single Cmd+K overlay that shows open panels, project files, and commands in the default view. Cmd+E removed.
+
+### Fixed
+
+- **Pi binary resolution in marketplace** — resolve directly to `cli.js` instead of `.bin` symlink which doesn't survive asar unpacking.
+
+## [0.4.11] - 2026-05-23
+
+### Fixed
+
+- **Agent child process module resolution** — use Electron's binary with `ELECTRON_RUN_AS_NODE=1` to spawn the pi agent child process, leveraging Electron's built-in asar support so transitive deps (like undici) resolve from inside the archive without unpacking.
+
+## [0.4.10] - 2026-05-23
+
+### Fixed
+
+- **Agent asar (attempt 3)** — disable asar entirely to fix child process module resolution failures in production builds.
+
+## [0.4.9] - 2026-05-23
+
+### Fixed
+
+- **Agent asar (attempt 2)** — unpack all `node_modules` from asar for child process spawning.
+
+## [0.4.8] - 2026-05-23
+
+### Fixed
+
+- **Agent asar (attempt 1)** — unpack `pi-coding-agent` from asar for production builds.
+
+## [0.4.7] - 2026-05-23
+
+Version bump only — no functional changes beyond agent panel fixes already shipped in the v0.4.6 cycle.
+
+## [0.4.6] - 2026-05-23
+
+Major feature release: in-app AI agent, git worktrees, canvas detach, and analytics.
+
+### Added
+
+- **Pi agent panel** — in-app AI agent powered by `@earendil-works/pi-agent-core` with OAuth auth flow (Claude, ChatGPT, Copilot), provider management, marketplace for extensions, chat thread UI, plan-mode install flow, per-chat model restore on resume, and a collapsible model picker grouped by provider.
+- **First-class git worktrees** — new "Parallel Work" sidebar tab promoting git worktrees from a hidden primitive to a user-friendly concept. Per-worktree color identity, status badges (dirty/ahead/behind), actions to open terminal/agent, merge back, or delete. Canvas nodes show a worktree color pill in the title bar; terminal/agent icons tinted by worktree in sidebar and tabs.
+- **Update analytics** — track update button clicks and feedback dismissals.
+
+### Changed
+
+- **Minimap redesign** — animated pill that expands in-place instead of the popover+button pattern. The `showMinimap` setting removed; the button is always visible.
+- **Panel-type registry** — centralised per-type metadata so adding a new panel type is a two-touch change instead of editing a dozen switch statements. Net −239 LOC.
+- **Workspace multi-select** — shift-click multi-select in the workspace list with bulk-delete via context menu.
+
+### Fixed
+
+- **Canvas detach preserves children** — detaching a canvas panel to its own window now transfers child panel states and canvas state (nodes, regions, viewport, zoom), so children render correctly instead of as generic stubs.
+- **Canvas-on-canvas blocked** — dropping a canvas onto another canvas is now refused at three layers (data, commit, and receive) to prevent broken nested interaction.
+- **Detached windows apply theme + settings** — `DockWindowShell` and `PanelWindowShell` now hydrate settings and subscribe to appearance mode changes.
+- **Agent OAuth flows** — `shell.openExternal` fires on auth/device-code events; auth URL stays visible above the paste-code form instead of being clobbered.
+- **Browser panel stability** — stabilise webview `src` to prevent re-navigation on re-render; ignore `about:blank` transient navigations; drop teardown `loadURL` that was clobbering session-restore URLs.
+- **Dock tab bar padding in detached canvas nodes** — nested mini-dock tab bars no longer inherit the 78 px traffic-light reservation.
+
+## [0.4.5] - 2026-05-21
+
+Refactoring release: unified drag system, simplified surface area, and codebase cleanup.
+
+### Changed
+
+- **Unified drag/drop runtime** — new `src/renderer/drag/` module replacing `useNodeDrag`, `useDockDrag`, `CanvasDropZone`, `DragGhost`, `DropZoneOverlay`, and `dropExecution`. Cross-window aware with full unit and scenario test coverage. `DockTabStack` split from 889 lines into focused units (`DockTabBar`, `DockTabContextMenu`, `useDockTabActions`, `useDockTabDrag`).
+- **OS-only notifications** — replaced in-app notification/toast system with native OS notifications; sidebar status simplified to running pulse + awaiting-input ring.
+- **Terminal URL handling** — replaced auto-opening terminal URLs with a per-terminal inline prompt; setting becomes `off` | `auto` | `prompt` (default `prompt`).
+- **Canvas grid** — removed grid snapping and line-grid style; grid is now a fixed-spacing decorative dot pattern.
+
+### Removed
+
+- **Canvas annotations and freehand drawings** — removed the annotation, drawing, and connection-wire feature set along with image-add IPC.
+- **Sidebar file explorer** — removed the explorer sidebar toggle.
+- **Bundled MCP registry** and `aiAssistEnabled` setting.
+- **Unused IPC/preload surface** — `http:fetch`, `shell:which`, `session:clear`, `app:getPath`, `dialog:saveFile`, crash report save, and others.
+- **Website and docs directories** — removed the separate marketing site and out-of-date design specs.
+- **Dead code** — `bun.lock`, `animation.ts`, custom `ContextMenu.tsx`, `.claude/` artifacts.
+
+## [0.4.4] - 2026-05-19
+
+### Changed
+
+- **Canvas drop zone overhaul** — accepts drops anywhere on the canvas (no pill gate); reserves a 60 px outer strip for dock indicators. Ghost preview matches the dropped node's real size. Source node hidden during drag.
+- **Spring-load** — maximised canvas nodes un-maximise 200 ms into a drag so the canvas underneath becomes a drop target. Canvas tabs spring-activate at 250 ms.
+- **Tab title resolution** — falls back to a fresh `appStore` read and panel-type label, so tabs no longer render as generic "Panel". Mini-dock layouts sweep orphan panel IDs.
+
+### Fixed
+
+- **Update & restart** — `quitAndInstall(false, true)` and `will-quit` handler now skip `reallyExit(0)` while an update install is in flight, so Electron's relaunch hook actually fires.
+
+## [0.4.3] - 2026-05-19
+
+### Fixed
+
+- **Terminal create failure retry** — a failed `terminal:create` no longer becomes a permanent tombstone. The half-built registry entry is torn down and a "Failed to start terminal" overlay with a Retry button is shown. Retry re-runs `getOrCreate` from scratch without requiring an app restart.
+- **Explorer tracked-file dimming** — `gitLsFiles` returns repo-relative paths but the tree used absolute paths, so the tracked-files set never matched. Now prefixed with the repo root.
+- **Windows shell resolution** — enhanced fallback logic for finding a usable shell on Windows.
+
+## [0.4.2] - 2026-05-19
+
+### Changed
+
+- **Inline update progress** — the update pill is now the sole affordance (no popover). Click while available starts the download; progress fills inside the pill; on completion, auto-triggers `quitAndInstall` so the app restarts to install.
+
+## [0.4.1] - 2026-05-18
+
+### Fixed
+
+- **Toolbar and welcome page centering** — now inset by sidebar widths so they center within the visible canvas area as sidebars open/close.
+- **Minimap popover palette** — uses canonical brand palette instead of muted floating-mode tones.
+- **Recent-folder open race** — welcome page awaits `setWorkspaceRootPath` before `createTerminal`, so the terminal reliably gets the right cwd.
+- **Welcome page reappearing** — gated on `workspace.rootPath` being empty, so an initialised workspace shows a blank canvas instead of the start page.
+- **Per-workspace canvas focus** — sidebar now resolves the workspace's own canvas store when computing children and jumping to panels.
+
+## [0.4.0] - 2026-05-18
+
+First release after the v0.3 series. Focus: error reporting, auto-updater, canvas drawing, and codebase simplification.
+
+### Added
+
+- **Sentry crash reporting** — replaced the homegrown crash reporter with Sentry (`@sentry/electron`). DSN via env var; gated by a `crashReportingEnabled` setting (default on).
+- **Auto-updater UI** — in-app update pill in the canvas toolbar. Main-process auto-updater broadcasts status (idle/checking/available/downloading/downloaded/manual/error); renderer subscribes and renders the pill.
+- **Freehand pencil drawings** — pencil tool for drawing strokes directly on the infinite canvas. Strokes live in canvas-space, pan/zoom with the workspace, and support click-to-select, drag, color palette, and delete.
+- **Terminal URL auto-open** — scans PTY output for URLs and routes them to an existing browser panel (or creates one). Gated by `autoOpenUrlsFromTerminal` setting (default off). Includes a portal registry for driving existing webviews.
+
+### Changed
+
+- **Removed AI config and MCP subsystem** — stripped AI configuration UI, MCP server management, and all related IPC/types/preload bindings.
+- **Removed usage tracking** — deleted usage-tracking popover, IPC channels, types, and related sidebar UI.
+
+### Internal
+
+- Coordinate system unit tests (`canvasToView` / `viewToCanvas` / `viewFrame`).
+
 ## [0.3.3] - 2026-05-13
 
 Patch release with one canvas-placement papercut.
