@@ -294,6 +294,7 @@ interface AppStoreActions {
   createProjectList: (workspaceId: string, position?: Point, placement?: PanelPlacement) => string
   createCanvas: (workspaceId: string, position?: Point, placement?: PanelPlacement) => string
   createAgent: (workspaceId: string, position?: Point, placement?: PanelPlacement) => string
+  createDocument: (workspaceId: string, filePath?: string, documentType?: 'pdf' | 'docx' | 'image', position?: Point, placement?: PanelPlacement) => string
 
   // Ensure the center dock zone contains a canvas panel for the given workspace.
   // Covers session-restore and new-workspace paths where the center layout may
@@ -753,6 +754,45 @@ export const useAppStore = create<AppStore>((set, get) => ({
         ),
       }))
       log.error('Failed to place editor panel:', error)
+      return null as unknown as string
+    }
+
+    return panelId
+  },
+
+  createDocument(workspaceId, filePath?, documentType?, position?, placement?) {
+    const panelId = generateId()
+    const fileName = filePath ? filePath.split('/').pop() ?? 'Document' : 'Document'
+    const panel: PanelState = {
+      id: panelId,
+      type: 'document',
+      title: fileName,
+      isDirty: false,
+      filePath,
+      documentType,
+    }
+
+    set((state) => ({
+      workspaces: state.workspaces.map((ws) =>
+        ws.id === workspaceId
+          ? { ...ws, panels: { ...ws.panels, [panelId]: panel } }
+          : ws,
+      ),
+    }))
+
+    try {
+      placePanel(panelId, 'document', placement, position, workspaceId === get().selectedWorkspaceId)
+    } catch (error) {
+      set((state) => ({
+        workspaces: state.workspaces.map((ws) =>
+          ws.id === workspaceId
+            ? { ...ws, panels: Object.fromEntries(
+                Object.entries(ws.panels).filter(([id]) => id !== panelId)
+              )}
+            : ws,
+        ),
+      }))
+      log.error('Failed to place document panel:', error)
       return null as unknown as string
     }
 

@@ -15,6 +15,7 @@ import BulkActionChip from './BulkActionChip'
 import SnapGuides from './SnapGuides'
 import CanvasRegionComponent from './CanvasRegionComponent'
 import type { Point, PanelType } from '../../shared/types'
+import { openFileAsPanel } from '../lib/fileRouting'
 
 // Module-level style injection — shared across all Canvas instances
 let canvasStyleInjected = false
@@ -227,7 +228,7 @@ const Canvas: React.FC<CanvasProps> = ({ children, onCreateAtPoint, panelId }) =
         // Drop of a folder → spawn a terminal scoped to that path.
         useAppStore.getState().createTerminal(wsId, undefined, pos, undefined, filePath)
       } else {
-        useAppStore.getState().createEditor(wsId, filePath, pos)
+        openFileAsPanel(wsId, filePath, pos)
       }
       offsetX += 40
     }

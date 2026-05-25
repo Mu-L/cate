@@ -15,6 +15,7 @@ import {
   TERMINAL_SCROLLBACK_SAVE,
   TERMINAL_SET_VISIBILITY,
   FS_READ_FILE,
+  FS_READ_BINARY,
   FS_WRITE_FILE,
   FS_READ_DIR,
   FS_WATCH_START,
@@ -119,6 +120,7 @@ import {
   ANALYTICS_FEEDBACK_PROMPT,
   ANALYTICS_FEEDBACK_SUBMIT,
   ANALYTICS_FEEDBACK_DISMISS,
+  ANALYTICS_FEEDBACK_ENGAGED,
   ANALYTICS_FEEDBACK_GET_PENDING,
   AGENT_CREATE,
   AGENT_PROMPT,
@@ -271,6 +273,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   fsReadFile(filePath: string): Promise<string> {
     return ipcRenderer.invoke(FS_READ_FILE, filePath)
+  },
+
+  fsReadBinary(filePath: string): Promise<ArrayBuffer> {
+    return ipcRenderer.invoke(FS_READ_BINARY, filePath)
   },
 
   fsWriteFile(filePath: string, content: string): Promise<void> {
@@ -920,8 +926,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return ipcRenderer.invoke(ANALYTICS_FEEDBACK_SUBMIT, payload)
   },
 
-  dismissFeedback(): void {
-    ipcRenderer.send(ANALYTICS_FEEDBACK_DISMISS)
+  dismissFeedback(method: string): void {
+    ipcRenderer.send(ANALYTICS_FEEDBACK_DISMISS, method)
+  },
+
+  trackFeedbackEngagement(): void {
+    ipcRenderer.send(ANALYTICS_FEEDBACK_ENGAGED)
   },
 
   getPendingFeedback(): Promise<{ fromVersion: string; toVersion: string } | null> {

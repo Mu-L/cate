@@ -65,6 +65,9 @@ export interface ElectronAPI {
   /** Read a file as UTF-8 text. */
   fsReadFile(filePath: string): Promise<string>
 
+  /** Read a file as binary (ArrayBuffer). */
+  fsReadBinary(filePath: string): Promise<ArrayBuffer>
+
   /** Write UTF-8 text to a file. */
   fsWriteFile(filePath: string, content: string): Promise<void>
 
@@ -536,7 +539,9 @@ export interface ElectronAPI {
    *  fatal validation errors. The dialog uses this to show success/retry UX. */
   submitFeedback(payload: { rating: number; comment?: string }): Promise<{ ok: boolean; buffered?: boolean }>
   /** Mark the feedback prompt as dismissed without submitting. */
-  dismissFeedback(): void
+  dismissFeedback(method: string): void
+  /** Track that the user engaged with the feedback modal (first interaction). */
+  trackFeedbackEngagement(): void
   /** Pull-based check for pending feedback (renderer calls on mount). */
   getPendingFeedback(): Promise<{ fromVersion: string; toVersion: string } | null>
 

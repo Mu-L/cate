@@ -141,6 +141,18 @@ export const PANEL_DEFINITIONS: Record<PanelType, SharedPanelDefinition> = {
     ghostSvg: ghost('rgb(74,158,255)', '<path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8L12 3z"/><path d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9L19 14z"/>'),
     canLiveOnCanvas: true,
   },
+  document: {
+    type: 'document',
+    label: 'Document',
+    brandColor: '#AF52DE',
+    switcherColor: '#AF52DE',
+    mutedColor: '#7a4a9a',
+    tintClass: 'text-purple-400',
+    defaultSize: { width: 700, height: 500 },
+    minimumSize: { width: 300, height: 250 },
+    ghostSvg: ghost('rgb(175,82,222)', '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><circle cx="12" cy="15" r="3"/>'),
+    canLiveOnCanvas: true,
+  },
   canvas: {
     type: 'canvas',
     label: 'Canvas',

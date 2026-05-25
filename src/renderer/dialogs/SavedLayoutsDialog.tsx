@@ -13,6 +13,7 @@ import {
   ensureCanvasOpsForPanel,
   setActiveCanvasPanelId,
 } from '../stores/appStore'
+import { openFileAsPanel } from '../lib/fileRouting'
 import { useCanvasStoreApi } from '../stores/CanvasStoreContext'
 import log from '../lib/logger'
 
@@ -114,7 +115,8 @@ export function SavedLayoutsDialog() {
       for (const node of snap.nodes ?? []) {
         switch (node.panelType) {
           case 'terminal': useAppStore.getState().createTerminal(wsId, undefined, node.origin); break
-          case 'editor':   useAppStore.getState().createEditor(wsId, node.filePath, node.origin); break
+          case 'document':
+          case 'editor':   openFileAsPanel(wsId, node.filePath ?? '', node.origin); break
           case 'browser':  useAppStore.getState().createBrowser(wsId, node.url, node.origin); break
         }
       }

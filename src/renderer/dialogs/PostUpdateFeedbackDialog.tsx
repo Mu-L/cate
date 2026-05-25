@@ -44,7 +44,7 @@ export function PostUpdateFeedbackDialog() {
   }, [])
 
   const close = useCallback(() => {
-    window.electronAPI.dismissFeedback()
+    window.electronAPI.dismissFeedback('close')
     setPayload(null)
   }, [])
 
