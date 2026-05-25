@@ -476,10 +476,13 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({ rootPath }) => {
         <div className="flex items-center justify-center flex-1 text-xs text-muted">
           Loading...
         </div>
-      ) : nodes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center flex-1 text-muted text-xs gap-2 p-4">
-          <span className="text-2xl">&#128193;</span>
-          <span>No files found</span>
+      ) : nodes.length === 0 && !rootCreating ? (
+        <div
+          className="flex flex-col items-center justify-center flex-1 text-muted text-xs gap-2 p-4"
+          onContextMenu={handleRootContextMenu}
+        >
+          <span className="text-2xl pointer-events-none">&#128193;</span>
+          <span className="pointer-events-none">No files found</span>
         </div>
       ) : (
         <div
