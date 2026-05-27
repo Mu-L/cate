@@ -253,43 +253,56 @@ const Canvas: React.FC<CanvasProps> = ({ children, onCreateAtPoint, panelId }) =
     const point = canvasContextMenu.canvasPoint
     const wsId = useAppStore.getState().selectedWorkspaceId
     const ws = useAppStore.getState().workspaces.find((w) => w.id === wsId)
-    const allRoots: string[] = []
-    if (ws?.rootPath) allRoots.push(ws.rootPath)
-    if (ws?.additionalRoots) allRoots.push(...ws.additionalRoots)
-    const hasMultipleRoots = allRoots.length > 1
-    const shortName = (p: string) => p.split('/').filter(Boolean).pop() || p
-    const items: Array<any> = []
-    if (onCreateAtPoint) {
-      if (hasMultipleRoots) {
-        items.push({
-          label: 'New Terminal',
-          submenu: allRoots.map((r, i) => ({
-            id: `new-terminal:${i}`,
-            label: i === 0 ? `${shortName(r)} (primary)` : shortName(r),
-          })),
-        })
-      } else {
-        items.push({ id: 'new-terminal', label: 'New Terminal' })
+    const rootPath = ws?.rootPath
+
+    // Fetch live worktree list from git so deleted ones never appear.
+    const buildAndShow = async () => {
+      let gitWorktrees: Array<{ path: string; branch: string; isCurrent: boolean }> = []
+      if (rootPath) {
+        try {
+          gitWorktrees = await window.electronAPI.gitWorktreeList(rootPath)
+        } catch { /* single-root fallback */ }
+      }
+
+      const items: Array<any> = []
+      if (onCreateAtPoint) {
+        if (gitWorktrees.length > 1) {
+          items.push({
+            label: 'New Terminal',
+            submenu: gitWorktrees.map((g) => ({
+              id: `new-terminal:${g.path}`,
+              label: (g.branch || (g.isCurrent ? 'main' : '(detached)')) + (g.isCurrent ? ' (primary)' : ''),
+            })),
+          })
+        } else {
+          items.push({ id: 'new-terminal', label: 'New Terminal' })
+        }
+        items.push(
+          { id: 'new-editor', label: 'New Editor' },
+          { id: 'new-browser', label: 'New Browser' },
+          { id: 'new-agent', label: 'New Pi Agent' },
+          { id: 'new-canvas', label: 'New Canvas' },
+          { type: 'separator' as const },
+        )
       }
       items.push(
-        { id: 'new-editor', label: 'New Editor' },
-        { id: 'new-browser', label: 'New Browser' },
-        { id: 'new-agent', label: 'New Pi Agent' },
-        { id: 'new-canvas', label: 'New Canvas' },
-        { type: 'separator' as const },
+        { id: 'new-region', label: 'New Region' },
       )
-    }
-    items.push(
-      { id: 'new-region', label: 'New Region' },
-    )
-    window.electronAPI.showContextMenu(items).then((id) => {
+      const id = await window.electronAPI.showContextMenu(items)
       if (cancelled) return
       closeCanvasContextMenu()
       if (id?.startsWith('new-terminal:')) {
-        const idx = parseInt(id.slice('new-terminal:'.length), 10)
-        const cwd = allRoots[idx]
-        const cwdToUse = idx === 0 ? undefined : cwd // primary root uses default flow
-        useAppStore.getState().createTerminal(wsId, undefined, point, undefined, cwdToUse)
+        const wtPath = id.slice('new-terminal:'.length)
+        const g = gitWorktrees.find((w) => w.path === wtPath)
+        if (g) {
+          const cwdToUse = g.isCurrent ? undefined : g.path
+          const panelId = useAppStore.getState().createTerminal(wsId, undefined, point, undefined, cwdToUse)
+          const storedWt = (useAppStore.getState().workspaces.find((w) => w.id === wsId)?.worktrees ?? [])
+            .find((w) => w.path === g.path)
+          if (storedWt) {
+            useAppStore.getState().setPanelWorktreeId(wsId, panelId, storedWt.id)
+          }
+        }
         return
       }
       // If the click point falls inside a Region that has a defaultCwd,
@@ -318,7 +331,8 @@ const Canvas: React.FC<CanvasProps> = ({ children, onCreateAtPoint, panelId }) =
           canvasApi.getState().addRegion('Region', point, { width: 400, height: 300 })
           break
       }
-    })
+    }
+    void buildAndShow()
     return () => { cancelled = true }
   }, [canvasContextMenu, onCreateAtPoint, canvasApi, closeCanvasContextMenu])
 
