@@ -181,6 +181,45 @@ function getProcessName(pid: number): Promise<string | null> {
   }))
 }
 
+/** Full command line for a PID via `ps -o args=`. Used to identify agents
+ *  that ship as `#!/usr/bin/env node` scripts (Gemini CLI, etc.) where
+ *  `comm=` returns `node`. */
+function getProcessArgs(pid: number): Promise<string | null> {
+  if (!pid || pid <= 0) return Promise.resolve(null)
+  return limit(() => new Promise((resolve) => {
+    execFile('ps', ['-o', 'args=', '-p', `${pid}`], {
+      encoding: 'utf-8',
+      timeout: 2000,
+    }, (err, stdout) => {
+      if (err || !stdout) { resolve(null); return }
+      const out = stdout.trim()
+      resolve(out.length === 0 ? null : out)
+    })
+  }))
+}
+
+/** Interpreter names that frequently host an agent CLI as a script. When
+ *  `getProcessName()` returns one of these we fall back to args-based
+ *  matching on the script basename. */
+const INTERPRETER_NAMES = new Set(['node', 'bun', 'deno', 'python', 'python3'])
+
+/** Extract a likely script basename from a `ps -o args=` line. Skips flags
+ *  (`-`/`--`-prefixed tokens) and the interpreter itself. Returns the
+ *  basename of the first plausible script-path argument. */
+function scriptBasenameFromArgs(args: string): string | null {
+  // Split on whitespace; the first token is the interpreter path.
+  const tokens = args.split(/\s+/).filter(Boolean)
+  for (let i = 1; i < tokens.length; i++) {
+    const tok = tokens[i]
+    if (tok.startsWith('-')) continue
+    const slash = tok.lastIndexOf('/')
+    const base = slash === -1 ? tok : tok.slice(slash + 1)
+    if (!base) continue
+    return base.toLowerCase()
+  }
+  return null
+}
+
 /**
  * Agent CLI definitions. Each entry maps process name patterns to a display name.
  * The matcher checks if the process basename (lowercased) matches any pattern.
@@ -437,7 +476,16 @@ async function scanTerminal(
         firstChildName = name
       }
       if (!foundAgentName) {
-        const agentMatch = matchAgentProcess(name)
+        let agentMatch = matchAgentProcess(name)
+        // Node/bun/deno scripts: comm= returns the interpreter, so probe the
+        // arg vector for the script basename (gemini ships as `#!/usr/bin/env node`).
+        if (!agentMatch && INTERPRETER_NAMES.has(name.toLowerCase())) {
+          const args = await getProcessArgs(childPid)
+          if (args) {
+            const script = scriptBasenameFromArgs(args)
+            if (script) agentMatch = matchAgentProcess(script)
+          }
+        }
         if (agentMatch) {
           foundAgentName = agentMatch
           foundAgentPid = childPid
